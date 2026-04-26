@@ -385,7 +385,7 @@ async function send(){
         'x-openclaw-model': S.mdl,
       },
       body:JSON.stringify({
-        model:'openclaw',
+        model:'openclaw/default',
         stream:false,
         messages:[
           {role:'system',content:'You are OpenClaw, a powerful AI agent. Help with video creation, YouTube research, script writing, browser automation, and file management. Be concise and action-oriented.'},
@@ -451,7 +451,7 @@ async function onFile(inp){
       const r=await fetch(`${S.hf}/v1/chat/completions`,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.tok}`,'x-openclaw-model':S.mdl},
-        body:JSON.stringify({model:'openclaw',stream:false,messages:[...S.hist.slice(-10)]}),
+        body:JSON.stringify({model:'openclaw/default',stream:false,messages:[...S.hist.slice(-10)]}),
         signal:AbortSignal.timeout(60000),
       });
       hideTyping();
