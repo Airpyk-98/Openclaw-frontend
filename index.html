@@ -292,13 +292,11 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);display:flex;flex-direct
 // ── MODELS ──
 const MODELS=[
   {id:'google/gemini-2.0-flash', label:'Gemini 2.0 Flash', desc:'Google · Primary Model', icon:'✨',cls:'gg'},
-  {id:'openrouter/openrouter/auto',       label:'Auto (Best Free)',  desc:'OpenRouter · Auto-selects best free model', icon:'🎯',cls:'au'},
-  {id:'openrouter/google/gemma-4-31b-it:free', label:'Gemma 4 31B', desc:'Google · Coding & reasoning',              icon:'♊',cls:'gg'},
-  {id:'openrouter/qwen/qwen3-coder:free', label:'Qwen3 Coder',      desc:'Alibaba · Heavy code tasks',               icon:'🧠',cls:'qw'},
-  {id:'openrouter/deepseek/deepseek-chat:free',label:'DeepSeek Chat',desc:'DeepSeek · Research & writing',           icon:'🔬',cls:'ds'},
-  {id:'openrouter/meta-llama/llama-4-scout:free',label:'Llama 4 Scout',desc:'Meta · General tasks',                 icon:'🦙',cls:'ll'},
+  {id:'openrouter/meta-llama/llama-3.3-70b-instruct:free',label:'Llama 3.3 70B',desc:'Meta · Heavy tasks & fallback', icon:'🦙',cls:'ll'},
+  {id:'openrouter/google/gemma-2-9b-it:free', label:'Gemma 2 9B', desc:'Google · Coding & reasoning',              icon:'♊',cls:'gg'},
+  {id:'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', label:'Qwen 2.5 Coder', desc:'Alibaba · Heavy code tasks', icon:'🧠',cls:'qw'},
+  {id:'openrouter/deepseek/deepseek-chat:free',label:'DeepSeek Chat',desc:'DeepSeek · Research & writing',           icon:'🔬',cls:'ds'}
 ];
-
 // ── STATE ──
 const S={
   hf:  localStorage.getItem('oc_hf')||'',
