@@ -628,16 +628,12 @@ function persistLocal(role,text,type,url){
 async function pingNow(){
   if(!S.hfUrl) return;
   try{
-    // ping the canvas or health endpoint
-    const r = await fetch(S.hfUrl+'/__openclaw__/canvas/',{signal:AbortSignal.timeout(8000)});
-    setOnline(true);
-  }catch{
-    // try /health
-    try{
-      const r2 = await fetch(S.hfUrl+'/health',{signal:AbortSignal.timeout(5000)});
-      setOnline(r2.ok);
-    }catch{setOnline(false);}
-  }
+    const r = await fetch(S.hfUrl+'/v1/models',{
+      headers:{'Authorization':`Bearer ${S.token}`},
+      signal:AbortSignal.timeout(8000)
+    });
+    setOnline(r.ok);
+  }catch{setOnline(false);}
 }
 
 function setOnline(v){
@@ -675,7 +671,7 @@ async function send(){
   showTyping();
 
   try{
-    const res = await fetch(`${S.hfUrl}/api/chat/completions`,{
+    const res = await fetch(`${S.hfUrl}/v1/chat/completions`,{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
