@@ -267,9 +267,9 @@ textarea.fld-input:focus{border-color:rgba(61,155,233,0.5);}
       <button onclick="closeWksp()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
     </div>
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchWTab('files')">Outputs</button>
-      <button class="tab-btn" onclick="switchWTab('skills')">Skills</button>
-      <button class="tab-btn" onclick="switchWTab('add-skill')">Add Skill</button>
+      <button class="tab-btn active" onclick="switchWTab('files', this)">Outputs</button>
+      <button class="tab-btn" onclick="switchWTab('skills', this)">Skills</button>
+      <button class="tab-btn" onclick="switchWTab('add-skill', this)">Add Skill</button>
     </div>
 
     <div class="tab-pane active" id="pane-files">
@@ -302,7 +302,7 @@ textarea.fld-input:focus{border-color:rgba(61,155,233,0.5);}
         <textarea id="skContent" class="fld-input" placeholder="# My Skill\n\n## Steps..."></textarea>
       </div>
       <div class="btnrow" style="margin-top:10px;">
-        <button class="btn btnpri" onclick="doInstallSkill()">Install Skill</button>
+        <button class="btn btnpri" onclick="doInstallSkill(this)">Install Skill</button>
       </div>
     </div>
   </div>
@@ -329,6 +329,4 @@ textarea.fld-input:focus{border-color:rgba(61,155,233,0.5);}
       <div class="fld">
         <label>Gateway Auth Token</label>
         <input id="cTok" type="password" placeholder="Airpyk98"/>
-        <div class="fhint">Must match gateway.auth.token in your openclaw.json</div>
-      </div>
-     
+        <div class="fhint">Must match gateway.auth.token in your openclaw.json</d
