@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>OpenClaw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg0:#0a0f14;--bg1:#111820;--bg2:#182030;--bg3:#1e2a3a;
+  --out:#1a3a5c;--in:#141e2a;
+  --accent:#3d9be9;--accent2:#5bb3ff;
+  --green:#3dcc7a;--red:#e05c5c;--yellow:#f0c060;
+  --text:#e8edf2;--text2:#7a9ab5;--text3:#3a5570;
+  --border:rgba(61,155,233,0.12);--glow:0 0 20px rgba(61,155,233,0.15);
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg0)}
+body{font-family:'DM Sans',sans-serif;color:var(--text);display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 16px rgba(0,0,0,0.4);z-index:10}
+.hdr-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#3d9be9);display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;flex-shrink:0;box-shadow:0 0 0 2px rgba(61,155,233,0.3)}
+.sring{position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;background:var(--text3);border:2px solid var(--bg1);transition:background 0.4s}
+.sring.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.hdr-info{flex:1;min-width:0}
+.hdr-name{font-size:15px;font-weight:600}
+.hdr-sub{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;margin-top:1px}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--text3);transition:background 0.4s}
+.sdot.on{background:var(--green)}
+.hdr-acts{display:flex;gap:2px}
+.hbtn{background:none;border:none;cursor:pointer;color:var(--text2);padding:8px;border-radius:10px;font-size:18px;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.hbtn:hover{background:var(--bg3);color:var(--accent)}
+
+/* MODEL STRIP */
+.mstrip{background:rgba(61,155,233,0.06);border-bottom:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;gap:7px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.mstrip::-webkit-scrollbar{display:none}
+.mstrip-lbl{color:var(--text3);font-size:11px;white-space:nowrap;flex-shrink:0}
+.mchip{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.mchip:hover,.mchip.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(61,155,233,0.35)}
+
+/* BANNER */
+.banner{background:rgba(240,192,96,0.1);border-bottom:1px solid rgba(240,192,96,0.2);padding:5px 14px;font-size:12px;color:var(--yellow);display:none;align-items:center;gap:6px;flex-shrink:0}
+.banner.show{display:flex}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:3px;background:var(--bg0);background-image:radial-gradient(ellipse at 15% 15%,rgba(61,155,233,0.04) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(61,100,155,0.04) 0%,transparent 55%)}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--text3);border-radius:2px}
+
+.dsep{text-align:center;margin:10px 0 5px}
+.dsep span{background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:3px 10px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+
+.mrow{display:flex;align-items:flex-end;gap:8px;max-width:100%}
+.mrow.out{flex-direction:row-reverse}
+.mrow+.mrow{margin-top:1px}
+.mrow.gap{margin-top:8px}
+.mav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#3d9be9);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-bottom:2px}
+.mavph{width:30px;flex-shrink:0}
+
+.bbl{max-width:min(420px,78vw);border-radius:var(--r);font-size:14px;line-height:1.55;position:relative;word-break:break-word}
+.mrow.in .bbl{background:var(--in);border:1px solid var(--border);border-bottom-left-radius:4px;padding:9px 12px 7px}
+.mrow.out .bbl{background:var(--out);border:1px solid rgba(61,155,233,0.2);border-bottom-right-radius:4px;padding:9px 12px 7px}
+.bmeta{display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:4px}
+.btime{font-size:11px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace}
+.tick{font-size:12px;color:rgba(255,255,255,0.3)}
+.tick.read{color:var(--accent)}
+
+/* MEDIA */
+.mbbl{padding:4px!important}
+.mbbl img{max-width:100%;max-height:260px;border-radius:12px;display:block;object-fit:cover;cursor:pointer}
+.mbbl video{max-width:100%;max-height:260px;border-radius:12px;display:block;width:100%}
+.mbbl audio{width:100%;min-width:200px;border-radius:10px;margin:4px 0}
+.mcap{padding:5px 8px 2px;font-size:13px}
+
+.dbbl{display:flex;align-items:center;gap:10px;padding:10px 12px!important;min-width:190px}
+.dico{width:40px;height:40px;border-radius:10px;background:rgba(61,155,233,0.18);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.dinf{flex:1;min-width:0}
+.dname{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsz{font-size:11px;color:var(--text2);margin-top:2px}
+.ddl{background:none;border:none;cursor:pointer;color:var(--accent);font-size:20px;padding:4px;text-decoration:none}
+
+/* TYPING */
+.tybbl{background:var(--in);border:1px solid var(--border);border-radius:var(--r);border-bottom-left-radius:4px;padding:12px 16px;display:inline-flex;gap:5px;align-items:center}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--text2);animation:tb 1.3s ease infinite}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-6px);opacity:1}}
+
+/* UPLOAD PROGRESS */
+.upbbl{display:flex;align-items:center;gap:10px;padding:10px 12px!important;min-width:190px}
+.pbwrap{flex:1;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pb{height:100%;background:var(--accent);border-radius:2px;animation:pbpulse 1.5s ease infinite}
+@keyframes pbpulse{0%{width:20%}50%{width:80%}100%{width:20%}}
+
+/* BUBBLE TEXT FORMATTING */
+.bbl pre{background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;margin:6px 0;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5}
+.bbl code{background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px}
+.bbl pre code{background:none;padding:0}
+.bbl strong{color:var(--accent2)}
+.bbl a{color:var(--accent);text-decoration:none}
+.bbl a:hover{text-decoration:underline}
+
+/* INPUT */
+.inarea{background:var(--bg1);border-top:1px solid var(--border);padding:8px 12px;display:flex;align-items:flex-end;gap:8px;flex-shrink:0}
+.atwrap{position:relative}
+.atbtn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:22px;padding:8px;border-radius:10px;transition:all 0.15s;display:flex;align-items:center}
+.atbtn:hover{color:var(--accent);background:var(--bg3)}
+.atmenu{position:absolute;bottom:calc(100% + 8px);left:0;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:8px;display:none;flex-direction:column;gap:2px;min-width:155px;box-shadow:0 8px 30px rgba(0,0,0,0.5),var(--glow);z-index:50}
+.atmenu.open{display:flex}
+.atopt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;color:var(--text);transition:background 0.1s;background:none;border:none;text-align:left;width:100%}
+.atopt:hover{background:var(--bg3)}
+.atopt span{font-size:18px}
+
+.inwrap{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:22px;display:flex;align-items:flex-end;padding:8px 14px;min-height:44px;max-height:120px;transition:border-color 0.15s}
+.inwrap:focus-within{border-color:rgba(61,155,233,0.4)}
+#mInput{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;resize:none;max-height:100px;line-height:1.4;padding:2px 0;scrollbar-width:none}
+#mInput::placeholder{color:var(--text3)}
+#mInput::-webkit-scrollbar{display:none}
+
+.sndbtn{width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;transition:all 0.15s;flex-shrink:0}
+.sndbtn:hover{background:var(--accent2);box-shadow:0 0 15px rgba(61,155,233,0.4)}
+.sndbtn:active{transform:scale(0.9)}
+.sndbtn.busy{background:var(--bg3);cursor:not-allowed}
+
+/* OVERLAYS */
+.ovl{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px)}
+.ovl.open{display:flex}
+.sheet{position:relative;background:var(--bg1);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 0 40px;z-index:1;animation:sup 0.25s cubic-bezier(.34,1.4,.64,1);border-top:1px solid var(--border)}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.shandle{width:36px;height:4px;background:var(--text3);border-radius:2px;margin:0 auto 18px}
+.stitle{font-size:15px;font-weight:600;padding:0 20px 14px;border-bottom:1px solid var(--border)}
+
+/* MODEL SHEET */
+.mlist{padding:6px 0}
+.mitem{display:flex;align-items:center;gap:14px;padding:12px 20px;cursor:pointer;transition:background 0.1s;background:none;border:none;width:100%;text-align:left}
+.mitem:hover{background:rgba(61,155,233,0.08)}
+.mitem.active{background:rgba(61,155,233,0.13)}
+.mico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border)}
+.mico.gg{background:linear-gradient(135deg,#1a2e50,#2d5a8e)}
+.mico.qw{background:linear-gradient(135deg,#1a3020,#2d6040)}
+.mico.ds{background:linear-gradient(135deg,#1a1a40,#2d2d7a)}
+.mico.ll{background:linear-gradient(135deg,#3a1a1a,#7a2d2d)}
+.mico.au{background:linear-gradient(135deg,#2a1a3a,#5a2d7a)}
+.mdet{flex:1}
+.mname{font-size:14px;font-weight:500}
+.mdesc{font-size:12px;color:var(--text2);margin-top:2px}
+.mfree{font-size:10px;font-weight:700;background:rgba(61,204,122,0.18);color:var(--green);padding:2px 7px;border-radius:8px;margin-left:6px}
+.mchk{color:var(--accent);font-size:18px;display:none}
+.mitem.active .mchk{display:block}
+
+/* SETTINGS SHEET */
+.sbody{padding:16px 20px;max-height:70vh;overflow-y:auto}
+.sbody::-webkit-scrollbar{width:3px}
+.sbody::-webkit-scrollbar-thumb{background:var(--text3);border-radius:2px}
+.fld{margin-bottom:13px}
+.fld label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.fld input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:14px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color 0.15s}
+.fld input:focus{border-color:rgba(61,155,233,0.5)}
+.fld input::placeholder{color:var(--text3)}
+.fhint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5}
+.fdiv{border-top:1px solid var(--border);margin:14px 0}
+.fsec{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.fnotice{background:rgba(61,204,122,0.07);border:1px solid rgba(61,204,122,0.18);border-radius:10px;padding:10px 13px;margin-top:10px;font-size:12px;color:var(--green);line-height:1.6}
+.btnrow{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.btnsec{background:var(--bg3);color:var(--text2)}
+.btnsec:hover{background:var(--bg2)}
+.btnpri{background:var(--accent);color:#fff}
+.btnpri:hover{background:var(--accent2);box-shadow:0 0 15px rgba(61,155,233,0.3)}
+
+/* LIGHTBOX */
+.lbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.96);display:none;align-items:center;justify-content:center;padding:20px}
+.lbox.open{display:flex}
+.lbox img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}
+.lclose{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:22px;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+@media(max-width:600px){.bbl{max-width:85vw}}
+
+/* TOOLS PANEL */
+.tooltabs{display:flex;gap:8px;padding:0 20px 12px;flex-wrap:wrap}
+.ttab{border:none;background:var(--bg2);color:var(--text2);padding:9px 12px;border-radius:999px;font-size:12px;cursor:pointer;border:1px solid var(--border)}
+.ttab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.toolbody{padding:0 20px 12px;max-height:68vh;overflow-y:auto}
+.toolpanel{display:none}
+.toolpanel.active{display:block}
+.toolgrid{display:grid;gap:12px}
+.toolcard{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px}
+.toolcard h4{font-size:13px;margin-bottom:10px;color:var(--text)}
+.toolrow{display:flex;gap:8px;flex-wrap:wrap}
+.toolrow .btn{flex:unset;padding:10px 12px;border-radius:10px}
+.toollist{display:flex;flex-direction:column;gap:8px}
+.toolitem{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:10px 12px}
+.toolitem .left{min-width:0;flex:1}
+.toolitem .name{font-size:13px;font-weight:600;word-break:break-word}
+.toolitem .meta{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.4;word-break:break-word}
+.toolitem a{font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap}
+.toolfield{margin-bottom:10px}
+.toolfield label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.toolfield input,.toolfield textarea{width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;font-family:'DM Sans',sans-serif}
+.toolfield textarea{min-height:120px;resize:vertical;line-height:1.45}
+.toolhint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5}
+.mini{font-size:11px;color:var(--text3)}
+
+</style>
+</head>
+<body>
+
+<div class="banner" id="bnr">⚠️ <span id="bnrMsg">Not connected. Tap ⚙️ to configure.</span></div>
+
+<div class="hdr">
+  <div class="hdr-av">🦞<div class="sring" id="sring"></div></div>
+  <div class="hdr-info">
+    <div class="hdr-name">OpenClaw</div>
+    <div class="hdr-sub"><div class="sdot" id="sdot"></div><span id="stxt">Not connected</span></div>
+  </div>
+  <div class="hdr-acts">
+    <button class="hbtn" onclick="openMdl()" title="Switch model">🤖</button>
+    <button class="hbtn" onclick="openCfg()" title="Settings">⚙️</button>
+    <button class="hbtn" onclick="openTools()" title="Skills, files & chat backup">🧰</button>
+    <button class="hbtn" onclick="ping()" title="Reconnect">🔄</button>
+  </div>
+</div>
+
+<div class="mstrip">
+  <span class="mstrip-lbl">Model:</span>
+  <div id="chips" style="display:flex;gap:6px;"></div>
+</div>
+
+<div class="msgs" id="msgs">
+  <div class="dsep"><span>Today</span></div>
+  <div class="mrow in gap">
+    <div class="mav">🦞</div>
+    <div class="bbl">
+      👋 <strong>OpenClaw is ready.</strong><br><br>
+      Tap ⚙️ → enter your HF Space URL and token → Save.<br><br>
+      You can send:<br>
+      🖼️ Images &nbsp;🎬 Videos &nbsp;🎵 Audio &nbsp;📄 Docs<br>
+      And tasks like <code>/render</code>, <code>/research youtube.com/...</code>
+      <div class="bmeta"><span class="btime" id="t0"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="inarea">
+  <div class="atwrap">
+    <button class="atbtn" onclick="togAt()" id="atbtn">📎</button>
+    <div class="atmenu" id="atmenu">
+      <button class="atopt" onclick="pick('image/*','image')"><span>🖼️</span> Image</button>
+      <button class="atopt" onclick="pick('video/*','video')"><span>🎬</span> Video</button>
+      <button class="atopt" onclick="pick('audio/*','audio')"><span>🎵</span> Audio</button>
+      <button class="atopt" onclick="pick('*','doc')"><span>📄</span> Document</button>
+    </div>
+    <input type="file" id="fIn" style="display:none" onchange="onFile(this)"/>
+  </div>
+  <div class="inwrap">
+    <textarea id="mInput" placeholder="Message OpenClaw…" rows="1"
+      oninput="autoH(this)" onkeydown="onKey(event)"></textarea>
+  </div>
+  <button class="sndbtn" id="sndbtn" onclick="send()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    </svg>
+  </button>
+</div>
+
+<div class="ovl" id="mdlOvl" onclick="closeMdl()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="shandle"></div>
+    <div class="stitle">Switch AI Model</div>
+    <div class="mlist" id="mlist"></div>
+  </div>
+</div>
+
+<div class="ovl" id="cfgOvl" onclick="closeCfg()">
+  <div class="sheet" onclick="event.stopPropagation()" style="padding-bottom:16px">
+    <div class="shandle"></div>
+    <div class="stitle">⚙️ Settings</div>
+    <div class="sbody">
+      <div class="fld">
+        <label>Hugging Face Space URL</label>
+        <input id="cHf" type="url" placeholder="https://airpyk98-openclaw-bot.hf.space"/>
+        <div class="fhint">Your HF Space where OpenClaw gateway runs</div>
+      </div>
+      <div class="fld">
+        <label>Gateway Auth Token</label>
+        <input id="cTok" type="password" placeholder="Airpyk98"/>
+        <div class="fhint">Must match gateway.auth.token in your openclaw.json</div>
+      </div>
+      <div class="fdiv"></div>
+      <div class="fsec">📦 Supabase Storage (optional — for persistent files)</div>
+      <div class="fld">
+        <label>Supabase Project URL</label>
+        <input id="cSbU" type="url" placeholder="https://xxxx.supabase.co"/>
+      </div>
+      <div class="fld">
+        <label>Supabase Anon Key</label>
+        <input id="cSbK" type="password" placeholder="eyJ..."/>
+        <div class="fhint">Get free at supabase.com → your project → Settings → API</div>
+      </div>
+      <div class="fnotice">💡 Without Supabase, files go straight to OpenClaw workspace. With it, all media persists even after HF restarts.</div>
+      <div class="btnrow">
+        <button class="btn btnsec" onclick="closeCfg()">Cancel</button>
+        <button class="btn btnpri" onclick="saveCfg()">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="ovl" id="toolsOvl" onclick="closeTools()">
+  <div class="sheet toolsheet" onclick="event.stopPropagation()" style="padding-bottom:16px">
+    <div class="shandle"></div>
+    <div class="stitle">🧩 Skills, outputs & chat backup</div>
+    <div class="tooltabs">
+      <button class="ttab active" data-tab="skills" onclick="setToolTab('skills')">Skills</button>
+      <button class="ttab" data-tab="files" onclick="setToolTab('files')">Outputs</button>
+      <button class="ttab" data-tab="chat" onclick="setToolTab('chat')">Chats</button>
+    </div>
+
+    <div class="toolbody">
+      <div class="toolpanel active" id="toolPanel_skills">
+        <div class="toolgrid">
+          <div class="toolcard">
+            <h4>Install / update a skill</h4>
+            <div class="toolfield">
+              <label>Skill name</label>
+              <input id="skillName" placeholder="my-skill"/>
+            </div>
+            <div class="toolfield">
+              <label>Trigger</label>
+              <input id="skillTrigger" placeholder="When user asks to..."/>
+            </div>
+            <div class="toolfield">
+              <label>Description</label>
+              <input id="skillDesc" placeholder="Does X using Y"/>
+            </div>
+            <div class="toolfield">
+              <label>Skill content</label>
+              <textarea id="skillContent" placeholder="# Skill title&#10;&#10;## Steps&#10;1. ..."></textarea>
+              <div class="toolhint">This calls <code>/install-skill</code> on your Hugging Face backend. It can add a new skill or replace an existing one, depending on your server logic.</div>
+            </div>
+            <div class="toolrow">
+              <button class="btn btnpri" onclick="installSkill()">Install / Update</button>
+              <button class="btn btnsec" onclick="refreshSkills()">Refresh list</button>
+            </div>
+          </div>
+
+          <div class="toolcard">
+            <h4>Installed skills</h4>
+            <div class="toollist" id="skillsList"><div class="mini">Tap refresh to load skills.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolpanel" id="toolPanel_files">
+        <div class="toolgrid">
+          <div class="toolcard">
+            <h4>View uploaded outputs</h4>
+            <div class="toolrow" style="align-items:flex-end">
+              <div class="toolfield" style="flex:1;min-width:180px;margin-bottom:0">
+                <label>Folder</label>
+                <input id="filesDir" value="outputs" placeholder="outputs or skills"/>
+              </div>
+              <button class="btn btnpri" onclick="refreshFiles()">Load</button>
+              <button class="btn btnsec" onclick="useFileDirPreset('outputs')">Outputs</button>
+              <button class="btn btnsec" onclick="useFileDirPreset('skills')">Skills</button>
+            </div>
+            <div class="toolhint">Uses <code>/files?dir=...</code> first, then falls back to <code>/files</code>.</div>
+          </div>
+
+          <div class="toolcard">
+            <h4>Files</h4>
+            <div class="toollist" id="filesList"><div class="mini">Tap load to list files.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolpanel" id="toolPanel_chat">
+        <div class="toolgrid">
+          <div class="toolcard">
+            <h4>Save or export chats</h4>
+            <div class="toolhint">
+              Best practice: save chat history in Supabase, and keep generated media in Hugging Face workspace/files. This gives you queryable chat records and easy file access.
+            </div>
+            <div class="toolrow" style="margin-top:12px">
+              <button class="btn btnpri" onclick="downloadChatLocal()">Download JSON</button>
+              <button class="btn btnsec" onclick="saveChatToHF()">Save to Hugging Face</button>
+              <button class="btn btnsec" onclick="saveChatToSupabase()">Save to Supabase</button>
+            </div>
+            <div class="toolhint">
+              Supabase save needs a storage bucket named <code>openclaw-chats</code>. If it is not created yet, the button will fail harmlessly.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="lbox" id="lbox" onclick="closeLb()">
+  <button class="lclose" onclick="closeLb()">✕</button>
+  <img id="limg" src="" alt=""/>
+</div>
+
+<script>
+// ── MODELS ──
+const MODELS=[
+  {id:'google/gemini-2.0-flash', label:'Gemini 2.0 Flash', desc:'Google · Primary Model', icon:'✨',cls:'gg'},
+  {id:'openrouter/meta-llama/llama-3.3-70b-instruct:free',label:'Llama 3.3 70B',desc:'Meta · Heavy tasks & fallback', icon:'🦙',cls:'ll'},
+  {id:'openrouter/google/gemma-2-9b-it:free', label:'Gemma 2 9B', desc:'Google · Coding & reasoning',              icon:'♊',cls:'gg'},
+  {id:'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', label:'Qwen 2.5 Coder', desc:'Alibaba · Heavy code tasks', icon:'🧠',cls:'qw'},
+  {id:'openrouter/deepseek/deepseek-chat:free',label:'DeepSeek Chat',desc:'DeepSeek · Research & writing',           icon:'🔬',cls:'ds'}
+];
+// ── STATE ──
+const S={
+  hf:  localStorage.getItem('oc_hf')||'',
+  tok: localStorage.getItem('oc_tok')||'Airpyk98',
+  sbu: localStorage.getItem('oc_sbu')||'',
+  sbk: localStorage.getItem('oc_sbk')||'',
+  mdl: localStorage.getItem('oc_mdl')||MODELS[0].id,
+  online:false, busy:false,
+  hist:[], sb:null,
+  knownFiles: new Set()
+};
+
+// ── INIT ──
+document.getElementById('t0').textContent=ft();
+renderChips(); renderMlist();
+loadLocal();
+if(S.hf){initSb(); ping(); startGlobalFileWatcher();}
+else showBanner('Not connected. Tap ⚙️ to configure.');
+
+// ── SUPABASE ──
+function initSb(){
+  if(!S.sbu||!S.sbk){S.sb=null;return;}
+  try{S.sb=supabase.createClient(S.sbu,S.sbk);}catch{S.sb=null;}
+}
+async function sbUpload(file){
+  if(!S.sb) return null;
+  try{
+    const ext=file.name.split('.').pop();
+    const path=`media/${Date.now()}.${ext}`;
+    const {error}=await S.sb.storage.from('openclaw').upload(path,file,{contentType:file.type,upsert:false});
+    if(error) throw error;
+    return S.sb.storage.from('openclaw').getPublicUrl(path).data.publicUrl;
+  }catch{return null;}
+}
+
+// ── PING ──
+async function ping(){
+  if(!S.hf) return;
+  const eps=['/v1/models','/__openclaw__/canvas/','/health'];
+  for(const ep of eps){
+    try{
+      const r=await fetch(S.hf+ep,{
+        headers:{'Authorization':`Bearer ${S.tok}`},
+        signal:AbortSignal.timeout(6000)
+      });
+      if(r.status<500){setOnline(true);return;}
+    }catch{}
+  }
+  setOnline(false);
+}
+
+function setOnline(v){
+  S.online=v;
+  document.getElementById('sring').className='sring'+(v?' on':'');
+  document.getElementById('sdot').className='sdot'+(v?' on':'');
+  document.getElementById('stxt').textContent=v?'online · ready':'connecting…';
+  v?hideBanner():showBanner('Reconnecting to OpenClaw…');
+}
+function showBanner(m){document.getElementById('bnrMsg').textContent=m;document.getElementById('bnr').classList.add('show');}
+function hideBanner(){document.getElementById('bnr').classList.remove('show');}
+
+// ── GLOBAL FILE WATCHER (Simulates Backend Push) ──
+function startGlobalFileWatcher() {
+  // Pre-load existing files so we don't alert on old stuff
+  fetch(`${S.hf}/files`, { headers: { 'Authorization': `Bearer ${S.tok}` }})
+    .then(r => r.json())
+    .then(d => {
+      (d.files || []).forEach(f => S.knownFiles.add(f.name));
+    }).catch(()=>{});
+
+  // Poll every 15 seconds
+  setInterval(async () => {
+    if (!S.hf || S.busy) return;
+    try {
+      const r = await fetch(`${S.hf}/files`, {
+        headers: { 'Authorization': `Bearer ${S.tok}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const newFiles = (d.files || []).filter(f => !f.isDir && !S.knownFiles.has(f.name));
+        
+        if (newFiles.length > 0) {
+          newFiles.forEach(f => S.knownFiles.add(f.name));
+          
+          const list = newFiles.map(f => {
+            const url = `${S.hf}/workspace/outputs/${f.name}`;
+            return `📎 [${f.name}](${url}) · ${fsz(f.size)}`;
+          }).join('\n');
+          
+          const msg = `🔔 **Task update:** I generated new file(s) in the background.\n${list}`;
+          addMsg('in', msg, 'text', null, ft());
+          saveLocal('in', msg, 'text', null);
+          S.hist.push({ role: 'assistant', content: msg });
+        }
+      }
+    } catch {}
+  }, 15000);
+}
+
+// ── TASK ROUTER ──
+function isLongTask(txt) {
+  const triggers = [
+    'render', 'video', 'remotion', 'ffmpeg', 'edit video',
+    'research', 'youtube', 'browse', 'screenshot', 'install',
+    'download', 'generate image', 'nanobanana', 'nightcafe',
+    'subagent', 'sub-agent', 'spawn', 'run script', 'execute'
+  ];
+  const low = txt.toLowerCase();
+  return triggers.some(t => low.includes(t));
+}
+
+// ── SEND ──
+async function send() {
+  const inp = document.getElementById('mInput');
+  const txt = inp.value.trim();
+  if(!txt || S.busy) return;
+  inp.value = ''; autoH(inp);
+
+  addMsg('out', txt, 'text', null, ft());
+  saveLocal('out', txt, 'text', null);
+  S.hist.push({ role: 'user', content: txt });
+
+  if(!S.hf) {
+    setTimeout(() => addMsg('in', '⚙️ Please set your HF Space URL in settings first.', 'text', null, ft()), 300);
+    return;
+  }
+
+  const longTask = isLongTask(txt);
+
+  if (longTask) {
+    // ── FIRE AND FORGET / BACKGROUND PROMISE ──
+    const id = 'bg-' + Date.now();
+    addMsg('in', '⏳ Task dispatched to background. You can keep sending messages. I will ping you when files are ready.', 'text', null, ft(), true, id);
+    
+    // Do NOT block UI. Let it run asynchronously.
+    fetch(`${S.hf}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${S.tok}`,
+        'x-openclaw-model': S.mdl,
+      },
+      body: JSON.stringify({
+        model: 'openclaw/default',
+        stream: false,
+        messages: [
+          { role: 'system', content: 'You are OpenClaw. This is a background task. Do the work, save to /workspace/outputs/ and report done with URLs.' },
+          ...S.hist.slice(-14),
+        ],
+      })
+    }).then(async r => {
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const rep = d.choices?.[0]?.message?.content || d.reply || d.text || 'Background task finished.';
+      addMsg('in', `✅ **Background task complete:**\n\n${rep}`, 'text', null, ft());
+      saveLocal('in', rep, 'text', null);
+      S.hist.push({ role: 'assistant', content: rep });
+    }).catch(e => {
+      addMsg('in', `❌ Background task failed: ${e.message}`, 'text', null, ft());
+    });
+    
+  } else {
+    // ── STREAMING (Prevents timeouts, feels like Telegram) ──
+    setBusy(true); 
+    const msgId = 'msg-' + Date.now();
+    addMsg('in', '▌', 'text', null, ft(), true, msgId);
+
+    try {
+      const r = await fetch(`${S.hf}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${S.tok}`,
+          'x-openclaw-model': S.mdl,
+        },
+        body: JSON.stringify({
+          model: 'openclaw/default',
+          stream: true, 
+          messages: [
+            { role: 'system', content: 'You are OpenClaw, a sharp AI agent. Be concise, direct, action-oriented. Provide download URLs for files created.' },
+            ...S.hist.slice(-14),
+          ],
+        })
+      });
+
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+        
+        for (const line of lines) {
+          const data = line.replace('data:', '').trim();
+          if (data === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(data);
+            const token = parsed.choices[0]?.delta?.content || '';
+            fullText += token;
+            updateMsg(msgId, fullText + '▌');
+          } catch(e) {}
+        }
+      }
+      
+      updateMsg(msgId, fullText);
+      saveLocal('in', fullText, 'text', null);
+      S.hist.push({ role: 'assistant', content: fullText });
+      setOnline(true);
+      
+    } catch(e) {
+      updateMsg(msgId, `❌ ${e.message}`);
+      if(e.message.includes('fetch') || e.message.includes('network')) setOnline(false);
+    }
+    setBusy(false);
+  }
+}
+
+// ── FILE UPLOAD ──
+let _ft='doc';
+function pick(accept,type){_ft=type;const f=document.getElementById('fIn');f.accept=accept;f.click();closeAt();}
+
+async function onFile(inp){
+  const file=inp.files[0]; if(!file) return;
+  inp.value='';
+  const rid='u'+Date.now();
+  addUpload(rid,file.name,fsz(file.size));
+  let url=null;
+  if(S.sb) url=await sbUpload(file);
+  if(!url&&S.hf){
+    try{
+      const fd=new FormData(); fd.append('file',file);
+      const r=await fetch(`${S.hf}/upload`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${S.tok}`,'X-Session-Id':'vercel-ui'},
+        body:fd, signal:AbortSignal.timeout(60000),
+      });
+      if(r.ok){const d=await r.json(); url=d.url?`${S.hf}${d.url}`:null;}
+    }catch{}
+  }
+  if(!url) url=URL.createObjectURL(file);
+  document.getElementById(rid)?.remove();
+  addMsg('out','',_ft,{url,name:file.name,size:fsz(file.size),mime:file.type},ft());
+  saveLocal('out',file.name,_ft,url);
+  if(S.hf){
+    const note=`[FILE UPLOADED] ${file.name} (${_ft}, ${fsz(file.size)})${url?' URL: '+url:''}. Please acknowledge and tell me what you can do with this file.`;
+    S.hist.push({role:'user',content:note});
+    
+    // Auto-reply for upload via stream
+    const msgId = 'msg-' + Date.now();
+    addMsg('in', '▌', 'text', null, ft(), true, msgId);
+    
+    fetch(`${S.hf}/v1/chat/completions`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.tok}`,'x-openclaw-model':S.mdl},
+      body:JSON.stringify({model:'openclaw/default',stream:true,messages:[...S.hist.slice(-10)]}),
+    }).then(async r=>{
+      if(!r.ok) throw new Error();
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+        for (const line of lines) {
+          const data = line.replace('data:', '').trim();
+          if (data === '[DONE]') break;
+          try {
+            const token = JSON.parse(data).choices[0]?.delta?.content || '';
+            fullText += token;
+            updateMsg(msgId, fullText + '▌');
+          } catch(e) {}
+        }
+      }
+      updateMsg(msgId, fullText);
+      saveLocal('in', fullText, 'text', null);
+      S.hist.push({role:'assistant',content:fullText});
+    }).catch(()=>{ updateMsg(msgId, '📥 File received in workspace.'); });
+  }
+}
+
+// ── RENDER MESSAGES ──
+function addMsg(role,text,type,media,time,scroll=true,id=null){
+  const c=document.getElementById('msgs');
+  const prev=c.lastElementChild;
+  const gap=!prev||prev.classList.contains('dsep')||(prev.classList.contains('mrow')&&!prev.classList.contains(role));
+  const row=document.createElement('div');
+  row.className=`mrow ${role}${gap?' gap':''}`;
+  if(id) row.id=id;
+  row.innerHTML=role==='in'
+    ?`<div class="mav">🦞</div>${mkBbl(role,text,type,media,time)}`
+    :`<div class="mavph"></div>${mkBbl(role,text,type,media,time)}`;
+  c.appendChild(row);
+  if(scroll) c.scrollTop=c.scrollHeight;
+}
+
+function updateMsg(id, text) {
+  const el = document.getElementById(id);
+  if(el) {
+    const textContainer = el.querySelector('.bbl > div:first-child');
+    if(textContainer) {
+      textContainer.innerHTML = fmt(text);
+      el.parentNode.scrollTop = el.parentNode.scrollHeight;
+    }
+  }
+}
+
+function mkBbl(role,text,type,media,time){
+  const tick=role==='out'?'<span class="tick read">✓✓</span>':'';
+  const meta=`<div class="bmeta"><span class="btime">${time||ft()}</span>${tick}</div>`;
+  if(type==='image'&&media) return `<div class="bbl mbbl"><img src="${esc(media.url)}" alt="${esc(media.name)}" onclick="openLb('${esc(media.url)}')" loading="lazy"/>${text?`<div class="mcap">${fmt(text)}</div>`:''}${meta}</div>`;
+  if(type==='video'&&media) return `<div class="bbl mbbl"><video controls preload="metadata" src="${esc(media.url)}"></video>${text?`<div class="mcap">${fmt(text)}</div>`:''}${meta}</div>`;
+  if(type==='audio'&&media) return `<div class="bbl mbbl"><audio controls src="${esc(media.url)}"></audio>${meta}</div>`;
+  if((type==='doc'||type==='document')&&media) return `<div class="bbl dbbl"><div class="dico">${dico(media.mime||'')}</div><div class="dinf"><div class="dname">${esc(media.name)}</div><div class="dsz">${media.size}</div></div><a href="${esc(media.url)}" download="${esc(media.name)}" class="ddl">⬇</a>${meta}</div>`;
+  return `<div class="bbl"><div>${fmt(text)}</div>${meta}</div>`;
+}
+
+function addUpload(id,name,size){
+  const c=document.getElementById('msgs');
+  const row=document.createElement('div');
+  row.className='mrow out gap'; row.id=id;
+  row.innerHTML=`<div class="mavph"></div><div class="bbl upbbl"><span style="font-size:22px">📤</span><div style="flex:1"><div style="font-size:13px;margin-bottom:6px">${esc(name)}</div><div class="pbwrap"><div class="pb"></div></div><div style="font-size:11px;color:var(--text2);margin-top:4px">${size} · uploading…</div></div></div>`;
+  c.appendChild(row); c.scrollTop=c.scrollHeight;
+}
+
+// ── LOCAL HISTORY ──
+function loadLocal(){
+  try{
+    const h=JSON.parse(localStorage.getItem('oc_hist')||'[]');
+    h.slice(-50).forEach(m=>addMsg(m.r,m.t,m.y,m.u?{url:m.u,name:m.t,size:'',mime:''}:null,m.ts,false));
+  }catch{}
+}
+function saveLocal(r,t,y,u){
+  const h=JSON.parse(localStorage.getItem('oc_hist')||'[]');
+  h.push({r,t,y,u,ts:ft()});
+  localStorage.setItem('oc_hist',JSON.stringify(h.slice(-100)));
+}
+
+// ── MODEL UI ──
+function renderChips(){
+  document.getElementById('chips').innerHTML=MODELS.map(m=>`<span class="mchip${S.mdl===m.id?' active':''}" onclick="swMdl('${m.id}')">${m.label}</span>`).join('');
+}
+function renderMlist(){
+  document.getElementById('mlist').innerHTML=MODELS.map(m=>`
+    <button class="mitem${S.mdl===m.id?' active':''}" onclick="swMdl('${m.id}')">
+      <div class="mico ${m.cls}">${m.icon}</div>
+      <div class="mdet"><div class="mname">${m.label}<span class="mfree">FREE</span></div><div class="mdesc">${m.desc}</div></div>
+      <div class="mchk">✓</div>
+    </button>`).join('');
+}
+function swMdl(id){
+  S.mdl=id; localStorage.setItem('oc_mdl',id);
+  renderChips(); renderMlist(); closeMdl();
+  addMsg('in',`🤖 Switched to **${MODELS.find(x=>x.id===id)?.label}**`,'text',null,ft());
+}
+
+// ── PANELS ──
+function openMdl(){document.getElementById('mdlOvl').classList.add('open');}
+function closeMdl(){document.getElementById('mdlOvl').classList.remove('open');}
+function openCfg(){
+  document.getElementById('cHf').value=S.hf;
+  document.getElementById('cTok').value=S.tok;
+  document.getElementById('cSbU').value=S.sbu;
+  document.getElementById('cSbK').value=S.sbk;
+  document.getElementById('cfgOvl').classList.add('open');
+}
+function closeCfg(){document.getElementById('cfgOvl').classList.remove('open');}
+function saveCfg(){
+  S.hf=document.getElementById('cHf').value.trim().replace(/\/$/,'');
+  S.tok=document.getElementById('cTok').value.trim()||'Airpyk98';
+  S.sbu=document.getElementById('cSbU').value.trim().replace(/\/$/,'');
+  S.sbk=document.getElementById('cSbK').value.trim();
+  localStorage.setItem('oc_hf',S.hf);
+  localStorage.setItem('oc_tok',S.tok);
+  localStorage.setItem('oc_sbu',S.sbu);
+  localStorage.setItem('oc_sbk',S.sbk);
+  initSb(); closeCfg();
+  if(S.hf){ping(); startGlobalFileWatcher(); addMsg('in',`🔗 Connecting to **${S.hf}**…`,'text',null,ft()); refreshSkills(); refreshFiles();}
+}
+
+// ── ATTACH ──
+function togAt(){document.getElementById('atmenu').classList.toggle('open');}
+function closeAt(){document.getElementById('atmenu').classList.remove('open');}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('atmenu').contains(e.target)&&!document.getElementById('atbtn').contains(e.target)) closeAt();
+});
+
+// ── LIGHTBOX ──
+function openLb(src){document.getElementById('limg').src=src;document.getElementById('lbox').classList.add('open');}
+function closeLb(){document.getElementById('lbox').classList.remove('open');}
+
+// ── UTILS ──
+function fmt(t){
+  if(!t) return '';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```([\s\S]*?)```/g,'<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\[(.*?)\]\((.*?)\)/g,'<a href="$2" target="_blank">$1</a>')
+    .replace(/\n/g,'<br>');
+}
+function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function ft(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function fsz(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function dico(m){if(m.includes('pdf'))return'📕';if(m.includes('word')||m.includes('document'))return'📘';if(m.includes('sheet')||m.includes('excel'))return'📗';if(m.includes('zip')||m.includes('rar'))return'🗜️';if(m.includes('text'))return'📄';return'📁';}
+function setBusy(v){S.busy=v;document.getElementById('sndbtn').classList.toggle('busy',v);document.getElementById('mInput').disabled=v;}
+function autoH(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+
+
+// ── TOOLS PANEL ──
+const TOOL_STATE = {
+  tab: 'skills',
+  skills: [],
+  files: [],
+};
+
+function openTools(){
+  document.getElementById('toolsOvl').classList.add('open');
+  setToolTab('skills');
+  refreshSkills();
+  refreshFiles();
+}
+function closeTools(){ document.getElementById('toolsOvl').classList.remove('open'); }
+
+function setToolTab(tab){
+  TOOL_STATE.tab = tab;
+  document.querySelectorAll('.ttab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.toolpanel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('toolPanel_' + tab);
+  if(panel) panel.classList.add('active');
+}
+
+function toolMsg(txt){
+  addMsg('in', txt, 'text', null, ft());
+  saveLocal('in', txt, 'text', null);
+  S.hist.push({ role: 'assistant', content: txt });
+}
+
+function getApiBase(){
+  return (S.hf || document.getElementById('cHf')?.value || '').trim().replace(/\/$/, '');
+}
+
+function getAuthHeaders(extra = {}){
+  const h = {'Authorization': `Bearer ${S.tok}`, ...extra};
+  return h;
+}
+
+function normalizeListResponse(d){
+  if(Array.isArray(d)) return d;
+  if(Array.isArray(d?.skills)) return d.skills;
+  if(Array.isArray(d?.files)) return d.files;
+  if(Array.isArray(d?.items)) return d.items;
+  if(Array.isArray(d?.data)) return d.data;
+  return [];
+}
+
+function renderSkills(items){
+  TOOL_STATE.skills = items || [];
+  const wrap = document.getElementById('skillsList');
+  if(!wrap) return;
+  if(!items || !items.length){
+    wrap.innerHTML = '<div class="mini">No skills found yet.</div>';
+    return;
+  }
+  wrap.innerHTML = items.map(sk => {
+    const name = sk.name || sk.filename || sk.file || 'skill';
+    const desc = sk.description || sk.desc || '';
+    const trig = sk.trigger || sk.when || '';
+    const path = sk.path || sk.url || '';
+    const dl = path ? (path.startsWith('http') ? path : `${getApiBase()}${path.startsWith('/') ? '' : '/'}${path}`) : `${getApiBase()}/workspace/skills/${encodeURIComponent(name)}.md`;
+    return `
+      <div class="toolitem">
+        <div class="left">
+          <div class="name">${esc(name)}</div>
+          <div class="meta">${esc(desc)}${trig ? '<br><strong>Trigger:</strong> ' + esc(trig) : ''}${path ? '<br><strong>Path:</strong> ' + esc(path) : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <a href="${dl}" target="_blank" rel="noreferrer">Download</a>
+          ${path ? `<a href="${path.startsWith('http') ? path : dl}" target="_blank" rel="noreferrer">Open</a>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function refreshSkills(){
+  const wrap = document.getElementById('skillsList');
+  if(wrap) wrap.innerHTML = '<div class="mini">Loading skills…</div>';
+  const base = getApiBase();
+  if(!base) return;
+  try{
+    const r = await fetch(`${base}/skills`, { headers: getAuthHeaders(), signal: AbortSignal.timeout(10000) });
+    const d = await r.json();
+    renderSkills(normalizeListResponse(d));
+  }catch(e){
+    if(wrap) wrap.innerHTML = `<div class="mini">Could not load skills: ${esc(e.message || 'error')}</div>`;
+  }
+}
+
+function renderFiles(items){
+  TOOL_STATE.files = items || [];
+  const wrap = document.getElementById('filesList');
+  if(!wrap) return;
+  if(!items || !items.length){
+    wrap.innerHTML = '<div class="mini">No files found in this folder.</div>';
+    return;
+  }
+  const dir = (document.getElementById('filesDir')?.value || 'outputs').trim() || 'outputs';
+  wrap.innerHTML = items.map(f => {
+    const name = f.name || f.filename || f.file || 'file';
+    const size = f.size != null ? fsz(Number(f.size)) : (f.bytes != null ? fsz(Number(f.bytes)) : '');
+    const isDir = !!f.isDir || !!f.dir || !!f.folder;
+    const rel = f.path || f.url || '';
+    const openUrl = rel
+      ? (rel.startsWith('http') ? rel : `${getApiBase()}${rel.startsWith('/') ? '' : '/'}${rel}`)
+      : `${getApiBase()}/workspace/${encodeURIComponent(dir)}/${encodeURIComponent(name)}`;
+    return `
+      <div class="toolitem">
+        <div class="left">
+          <div class="name">${esc(name)}${isDir ? ' <span class="mini">(folder)</span>' : ''}</div>
+          <div class="meta">${size ? esc(size) : ''}${rel ? '<br><strong>Path:</strong> ' + esc(rel) : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <a href="${openUrl}" target="_blank" rel="noreferrer">${isDir ? 'Open' : 'Download'}</a>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function refreshFiles(){
+  const wrap = document.getElementById('filesList');
+  const dir = (document.getElementById('filesDir')?.value || 'outputs').trim() || 'outputs';
+  if(wrap) wrap.innerHTML = '<div class="mini">Loading files…</div>';
+  const base = getApiBase();
+  if(!base) return;
+  try{
+    const url = `${base}/files?dir=${encodeURIComponent(dir)}`;
+    const r = await fetch(url, { headers: getAuthHeaders(), signal: AbortSignal.timeout(10000) });
+    const d = await r.json();
+    renderFiles(normalizeListResponse(d));
+  }catch{
+    try{
+      const r2 = await fetch(`${base}/files`, { headers: getAuthHeaders(), signal: AbortSignal.timeout(10000) });
+      const d2 = await r2.json();
+      renderFiles(normalizeListResponse(d2));
+    }catch(e){
+      if(wrap) wrap.innerHTML = `<div class="mini">Could not load files: ${esc(e.message || 'error')}</div>`;
+    }
+  }
+}
+
+async function installSkill(){
+  const base = getApiBase();
+  if(!base) return toolMsg('⚙️ Set your Hugging Face Space URL first.');
+  const payload = {
+    name: document.getElementById('skillName').value.trim(),
+    trigger: document.getElementById('skillTrigger').value.trim(),
+    description: document.getElementById('skillDesc').value.trim(),
+    content: document.getElementById('skillContent').value
+  };
+  if(!payload.name || !payload.content){
+    toolMsg('Please fill at least the skill name and content.');
+    return;
+  }
+  try{
+    const r = await fetch(`${base}/install-skill`, {
+      method: 'POST',
+      headers: getAuthHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000)
+    });
+    const d = await r.json().catch(()=> ({}));
+    if(!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    toolMsg(`✅ Skill saved: **${payload.name}**`);
+    await refreshSkills();
+  }catch(e){
+    toolMsg(`❌ Skill save failed: ${e.message}`);
+  }
+}
+
+function buildChatBlob(){
+  const payload = {
+    app: 'OpenClaw',
+    savedAt: new Date().toISOString(),
+    messages: S.hist,
+    localHistory: JSON.parse(localStorage.getItem('oc_hist') || '[]'),
+  };
+  return new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+}
+
+function chatFilename(){
+  return `openclaw-chat-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+}
+
+function downloadChatLocal(){
+  const blob = buildChatBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = chatFilename();
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toolMsg('⬇️ Chat exported to your device.');
+}
+
+async function saveChatToHF(){
+  const base = getApiBase();
+  if(!base) return toolMsg('⚙️ Set your Hugging Face Space URL first.');
+  const blob = buildChatBlob();
+  const fd = new FormData();
+  fd.append('file', blob, chatFilename());
+  try{
+    const r = await fetch(`${base}/upload`, {
+      method: 'POST',
+      headers: {'Authorization': `Bearer ${S.tok}`, 'X-Session-Id': 'chat-backup'},
+      body: fd,
+      signal: AbortSignal.timeout(60000),
+    });
+    const d = await r.json().catch(()=> ({}));
+    if(!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    const url = d.url ? `${base}${d.url}` : 'saved';
+    toolMsg(`✅ Chat saved to Hugging Face workspace: ${url}`);
+    await refreshFiles();
+  }catch(e){
+    toolMsg(`❌ HF chat save failed: ${e.message}`);
+  }
+}
+
+async function saveChatToSupabase(){
+  if(!S.sb) return toolMsg('⚠️ Supabase is not configured.');
+  const bucket = 'openclaw-chats';
+  const filename = `chats/${chatFilename()}`;
+  try{
+    const blob = buildChatBlob();
+    const { error } = await S.sb.storage.from(bucket).upload(filename, blob, {
+      contentType: 'application/json',
+      upsert: false
+    });
+    if(error) throw error;
+    const { data } = S.sb.storage.from(bucket).getPublicUrl(filename);
+    toolMsg(`✅ Chat saved to Supabase: ${data.publicUrl}`);
+  }catch(e){
+    toolMsg(`❌ Supabase chat save failed: ${e.message || e}`);
+  }
+}
+
+function useSkillFromList(i){
+  const sk = TOOL_STATE.skills[i];
+  if(!sk) return;
+  document.getElementById('skillName').value = sk.name || sk.filename || '';
+  document.getElementById('skillTrigger').value = sk.trigger || sk.when || '';
+  document.getElementById('skillDesc').value = sk.description || sk.desc || '';
+  toolMsg(`✍️ Loaded **${sk.name || sk.filename || 'skill'}** into the form.`);
+}
+
+function useFileDirPreset(dir){
+  document.getElementById('filesDir').value = dir;
+  refreshFiles();
+}
+
+setInterval(ping,4*60*1000);
+</script>
+</body>
+</html>
