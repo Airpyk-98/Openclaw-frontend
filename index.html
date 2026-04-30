@@ -410,24 +410,24 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);display:flex;flex-direct
 <script>
 // ── MODELS ──
 const MODELS=[
-  {id:'google/gemini-2.0-flash', label:'Gemini 2.0 Flash', desc:'Google · Primary Model', icon:'✨',cls:'gg'},
-  {id:'openrouter/meta-llama/llama-3.3-70b-instruct:free',label:'Llama 3.3 70B',desc:'Meta · Heavy tasks & fallback', icon:'🦙',cls:'ll'},
-  {id:'openrouter/google/gemma-2-9b-it:free', label:'Gemma 2 9B', desc:'Google · Coding & reasoning',              icon:'♊',cls:'gg'},
-  {id:'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', label:'Qwen 2.5 Coder', desc:'Alibaba · Heavy code tasks', icon:'🧠',cls:'qw'},
-  {id:'openrouter/deepseek/deepseek-chat:free',label:'DeepSeek Chat',desc:'DeepSeek · Research & writing',           icon:'🔬',cls:'ds'}
+  {id:'openai/gpt-5-nano', label:'GPT-5 Nano', desc:'OpenAI · Ultra Cheap & Reliable', icon:'⚡', cls:'qw'},
+  {id:'openai/gpt-4o-mini', label:'GPT-4o Mini', desc:'OpenAI · Fast Fallback', icon:'🧠', cls:'ds'},
+  {id:'google/gemini-2.0-flash', label:'Gemini 2.0 Flash', desc:'Google · High Quota Required', icon:'✨', cls:'gg'},
+  {id:'openrouter/meta-llama/llama-3.3-70b-instruct:free', label:'Llama 3.3 70B', desc:'Meta · Fallback', icon:'🦙', cls:'ll'}
 ];
+
 // ── STATE ──
 const S={
   hf:  localStorage.getItem('oc_hf')||'',
-  tok: localStorage.getItem('oc_tok')||'Airpyk98',
+  tok: localStorage.getItem('oc_tok')||'Airpyk98', // Default token matches backend
   sbu: localStorage.getItem('oc_sbu')||'',
   sbk: localStorage.getItem('oc_sbk')||'',
-  mdl: localStorage.getItem('oc_mdl')||MODELS[0].id,
+  mdl: localStorage.getItem('oc_mdl')||'openai/gpt-5-nano', // Set Nano as default
   online:false, busy:false,
   hist:[], sb:null,
   knownFiles: new Set()
 };
-
+  
 // ── INIT ──
 document.getElementById('t0').textContent=ft();
 renderChips(); renderMlist();
